@@ -1,7 +1,8 @@
 package ru.netology.patterns;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import com.codeborne.selenide.logevents.SelenideLogger;
+import io.qameta.allure.selenide.AllureSelenide;
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 
@@ -12,6 +13,15 @@ import static org.openqa.selenium.Keys.BACK_SPACE;
 
 public class СardDeliveryTest {
 
+    @BeforeAll
+    static void setUpAll() {
+        SelenideLogger.addListener("allure", new AllureSelenide());
+    }
+    @AfterAll
+    static void tearDown() {
+        SelenideLogger.removeListener("allure");
+    }
+
     @BeforeEach
     void setup() {
 
@@ -20,6 +30,7 @@ public class СardDeliveryTest {
     }
 
     @Test
+    @DisplayName("Should get success if planed and replaned")
     public void shouldPlanDelivery() {
 
         var validUser = DataGenerator.Registration.generateUser("ru");
@@ -52,6 +63,26 @@ public class СardDeliveryTest {
                 .shouldHave(exactText("Успешно! \n Встреча успешно запланирована на " + secondMeetingDate))
                 .shouldBe(visible);
 
+    }
+
+    @Test
+    @DisplayName("Should get error if entered wrong number")
+    void shouldGetErrorIfWrongPhoneNumber() {
+
+        var validUser = DataGenerator.Registration.generateUser("ru");
+        var daysToAddForFirstMeeting = 6;
+        var firstMeetingDate = DataGenerator.generateDate(daysToAddForFirstMeeting);
+
+        $("[data-test-id=city] input").setValue(validUser.getCity());
+        $("[data-test-id=date] input").doubleClick();
+        $("[data-test-id=date] input").sendKeys(BACK_SPACE);
+        $("[data-test-id=date] input").setValue(firstMeetingDate);
+        $("[data-test-id=name] input").setValue(validUser.getName());
+        $("[data-test-id=phone] input").setValue("+7890090");
+        $("[data-test-id=agreement]").click();
+        $(".button").click();
+        $("[data-test-id=phone] .input_invalid .input__sub").
+                shouldHave(exactText("Введите корректный номер телефона!"));
     }
 
 }
